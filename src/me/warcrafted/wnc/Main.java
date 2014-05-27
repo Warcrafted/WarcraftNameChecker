@@ -6,6 +6,8 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -24,11 +26,18 @@ import org.jsoup.select.Elements;
 public class Main {
 
 	private JFrame frame;
+	
 	private JTextField textFieldName;
 	private JTextField textFieldRealm;
 	private JLabel labelScanner;
 
 	private String s = "Scanner: ";
+
+	private List<String> euRealms;
+	private List<String> usRealms;
+
+	private List<String> used;
+	private List<String> available;
 
 	/**
 	 * Launch the application.
@@ -58,7 +67,7 @@ public class Main {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 277, 110);
+		frame.setBounds(100, 100, 360, 110);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setTitle("Warcraft Name Checker");
 		frame.getContentPane().setLayout(null);
@@ -71,6 +80,9 @@ public class Main {
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
 		}
+
+		used = new ArrayList<String>();
+		available = new ArrayList<String>();
 
 		textFieldName = new JTextField();
 		textFieldName.setBounds(55, 56, 100, 20);
@@ -98,16 +110,20 @@ public class Main {
 		lblName.setBounds(10, 56, 36, 14);
 		frame.getContentPane().add(lblName);
 
-		JButton buttonCheck = new JButton("Check");
-		buttonCheck.setBounds(165, 32, 89, 23);
-		frame.getContentPane().add(buttonCheck);
-
 		labelScanner = new JLabel("Scanner: 0%");
-		labelScanner.setBounds(175, 59, 89, 14);
+		labelScanner.setBounds(270, 36, 89, 14);
 		labelScanner.setVisible(false);
 		frame.getContentPane().add(labelScanner);
 
-		buttonCheck.addActionListener(new ActionListener() {
+		JButton buttonName = new JButton("Check Name");
+		buttonName.setToolTipText("See if the name is available on given realm");
+		buttonName.setBounds(165, 20, 100, 23);
+		frame.getContentPane().add(buttonName);
+
+		getRealms("eu");
+		getRealms("us");
+
+		buttonName.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String server = comboBox.getSelectedItem().toString();
@@ -122,6 +138,30 @@ public class Main {
 				labelScanner.setVisible(false);
 
 				JOptionPane.showMessageDialog(frame, "The name \"" + name + "\" is " + (available ? "" : "not") + " available!", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+			}
+		});
+
+		JButton buttonRealms = new JButton("Check Realms");
+		buttonRealms.setToolTipText("See all the available realms for this name");
+		buttonRealms.setBounds(165, 45, 100, 23);
+		frame.getContentPane().add(buttonRealms);
+
+		buttonRealms.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String server = comboBox.getSelectedItem().toString();
+				String name = textFieldName.getText();
+
+				JOptionPane.showMessageDialog(frame, "Scanning for available realms...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+				List<String> realms = getRealmsAvailable(server, name, 1);
+
+				if (!realms.isEmpty()) {
+					Window window = new Window(name);
+					window.setContents(realms);
+
+				} else {
+					JOptionPane.showMessageDialog(frame, "There are no available realms for this name.", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+				}
 			}
 		});
 	}
@@ -205,6 +245,134 @@ public class Main {
 		}
 
 		return (curMax == 0 || page == curMax) ? true : isAvailable(server, realm, name, page + 1, all);
+	}
+
+	private List<String> getRealms(String server) {
+		if (euRealms == null)
+			euRealms = new ArrayList<String>();
+		else
+			return euRealms;
+
+		if (usRealms == null)
+			usRealms = new ArrayList<String>();
+		else
+			return usRealms;
+
+		if (server.isEmpty())
+			return null;
+
+		String u = "http://" + server + ".battle.net/wow/en/status";
+		URL url = null;
+
+		try {
+			url = new URL(u);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+
+		Document doc = null;
+
+		try {
+			doc = Jsoup.parse(url.openStream(), "UTF-8", u);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		int j = server.equals("eu") ? 266 : 246; // 266 realms on eu, 246 realms on us
+
+		for (int i = 1; i <= j; i++) {
+			Element name = doc.select("#all-realms > div > table > tbody > tr:nth-child( " + i + ") > td.name").first();
+			Element type = doc.select("#all-realms > div > table > tbody > tr:nth-child( " + i + ") > td.type").first();
+			Element population = doc.select("#all-realms > div > table > tbody > tr:nth-child( " + i + ") > td.population").first();
+			Element locale = doc.select("#all-realms > div > table > tbody > tr:nth-child( " + i + ") > td.locale").first();
+
+			if (server.equals("eu")) {
+				euRealms.add(name.text() + ":" + type.text() + ":" + population.text() + ":" + locale.text());
+			} else if (server.equals("us")) {
+				usRealms.add(name.text() + ":" + type.text() + ":" + population.text() + ":" + locale.text());
+			}
+		}
+
+		return server.equals("eu") ? euRealms : usRealms;
+	}
+
+	private List<String> getRealmsAvailable(String server, String name, final int page) {
+		if (server.isEmpty() || name.isEmpty())
+			return null;
+
+		String u = "http://" + server + ".battle.net/wow/en/search?f=wowcharacter&page=" + page + "&q=" + name;
+		URL url = null;
+
+		try {
+			url = new URL(u);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+
+		Document doc = null;
+
+		try {
+			doc = Jsoup.parse(url.openStream(), "UTF-8", u);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		for (String realm : getRealms(server)) {
+			String realmName = realm.split(":")[0].trim();
+
+			if (getUsed(name, realmName, doc)) {
+				used.add(realm);
+			}
+		}
+
+		int curMax = 0;
+
+		for (Element el : doc.select("#content > div > div.content-bot.clear > div > div.search-right > div:nth-child(3) > div > ul")) {
+			String[] s = el.text().split(" ");
+
+			for (String ss : s) {
+				if (isInteger(ss) && toInteger(ss) > curMax) {
+					curMax = toInteger(ss);
+				}
+			}
+		}
+
+		if (curMax == 0 || page == curMax) {
+			for (String realm : getRealms(server)) {
+				if (!contains(realm, used)) {
+					available.add(realm);
+				}
+			}
+
+			return available;
+		} else {
+			return getRealmsAvailable(server, name, page + 1);
+		}
+	}
+
+	static boolean contains(String a, List<String> b) {
+		for (String string : b) {
+			if (string.equals(a)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean getUsed(String name, String realm, Document doc) {
+		Element el = doc.select("#content > div > div.content-bot.clear > div > div.search-right > div.view-table > div > table > tbody").first();
+		String[] c = el.text().split(name);
+
+		List<String> a = new ArrayList<String>();
+
+		for (String s : c) {
+			if (s.contains(realm) && !a.contains(realm)) {
+				a.add(realm);
+			}
+		}
+
+		return a.contains(realm);
 	}
 
 	private int toInteger(String s) {
