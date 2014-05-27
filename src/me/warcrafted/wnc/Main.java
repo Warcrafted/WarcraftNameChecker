@@ -26,10 +26,12 @@ import org.jsoup.select.Elements;
 public class Main {
 
 	private JFrame frame;
-	
+
 	private JTextField textFieldName;
 	private JTextField textFieldRealm;
-	private JLabel labelScanner;
+	
+	private JLabel labelScannerName;
+	private JLabel labelScannerRealms;
 
 	private String s = "Scanner: ";
 
@@ -110,10 +112,15 @@ public class Main {
 		lblName.setBounds(10, 56, 36, 14);
 		frame.getContentPane().add(lblName);
 
-		labelScanner = new JLabel("Scanner: 0%");
-		labelScanner.setBounds(270, 36, 89, 14);
-		labelScanner.setVisible(false);
-		frame.getContentPane().add(labelScanner);
+		labelScannerName = new JLabel("Scanner: 0%");
+		labelScannerName.setBounds(268, 24, 89, 14);
+		labelScannerName.setVisible(false);
+		frame.getContentPane().add(labelScannerName);
+		
+		labelScannerRealms = new JLabel("Scanner: 0%");
+		labelScannerRealms.setBounds(268, 49, 89, 14);
+		labelScannerRealms.setVisible(false);
+		frame.getContentPane().add(labelScannerRealms);
 
 		JButton buttonName = new JButton("Check Name");
 		buttonName.setToolTipText("See if the name is available on given realm");
@@ -134,8 +141,8 @@ public class Main {
 				JOptionPane.showMessageDialog(frame, "Scanning through " + j + " characters...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 
 				boolean available = isAvailable(server, realm, name, 1, j);
-				labelScanner.setText(s + ("100%"));
-				labelScanner.setVisible(false);
+				labelScannerName.setText(s + "100%");
+				labelScannerName.setVisible(false);
 
 				JOptionPane.showMessageDialog(frame, "The name \"" + name + "\" is " + (available ? "" : "not") + " available!", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 			}
@@ -149,14 +156,22 @@ public class Main {
 		buttonRealms.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String server = comboBox.getSelectedItem().toString();
+				String region = comboBox.getSelectedItem().toString();
 				String name = textFieldName.getText();
 
-				JOptionPane.showMessageDialog(frame, "Scanning for available realms...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
-				List<String> realms = getRealmsAvailable(server, name, 1);
-
+				JOptionPane.showMessageDialog(frame, "Scanning for available realms", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+				
+				labelScannerRealms.setVisible(true);
+				labelScannerRealms.setText(s + "0%");
+				labelScannerRealms.paintImmediately(labelScannerRealms.getVisibleRect());
+				
+				List<String> realms = getRealmsAvailable(region, name, 1);
+				
+				labelScannerRealms.setText(s + "100%");
+				labelScannerRealms.setVisible(false);			
+				
 				if (!realms.isEmpty()) {
-					Window window = new Window(name);
+					Window window = new Window(name + "-" + region.toLowerCase());
 					window.setContents(realms);
 
 				} else {
@@ -217,10 +232,10 @@ public class Main {
 
 		int percent = (int) (((page * 25) * 100) / all);
 
-		if (!labelScanner.isVisible())
-			labelScanner.setVisible(true);
-		labelScanner.setText(s + (percent + "%"));
-		labelScanner.paintImmediately(labelScanner.getVisibleRect());
+		if (!labelScannerName.isVisible())
+			labelScannerName.setVisible(true);
+		labelScannerName.setText(s + (percent + "%"));
+		labelScannerName.paintImmediately(labelScannerName.getVisibleRect());
 
 		for (Element el : doc.select("#content > div > div.content-bot.clear > div > div.search-right > div.view-table > div > table > tbody")) {
 			String[] c = el.text().split(name);
@@ -247,16 +262,23 @@ public class Main {
 		return (curMax == 0 || page == curMax) ? true : isAvailable(server, realm, name, page + 1, all);
 	}
 
-	private List<String> getRealms(String server) {
-		if (euRealms == null)
+	private List<String> getRealms(String server) {	
+		if (euRealms == null) {
 			euRealms = new ArrayList<String>();
-		else
-			return euRealms;
+		} else {
+			if (server.equals("eu") && !euRealms.isEmpty() && !usRealms.isEmpty()) {
+				return euRealms;
+			}
+		}
 
-		if (usRealms == null)
+		if (usRealms == null) {
 			usRealms = new ArrayList<String>();
-		else
-			return usRealms;
+		} else {
+			if (server.equals("us") && !usRealms.isEmpty() && !euRealms.isEmpty()) {
+				System.out.println("return usRealms");
+				return usRealms;
+			}
+		}
 
 		if (server.isEmpty())
 			return null;
@@ -316,11 +338,11 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		
 		for (String realm : getRealms(server)) {
 			String realmName = realm.split(":")[0].trim();
 
-			if (getUsed(name, realmName, doc)) {
+			if (isUsed(name, realmName, doc)) {
 				used.add(realm);
 			}
 		}
@@ -336,6 +358,11 @@ public class Main {
 				}
 			}
 		}
+		
+		int percent = (int) ((page * 100) / curMax);
+
+		labelScannerRealms.setText(s + (percent + "%"));
+		labelScannerRealms.paintImmediately(labelScannerRealms.getVisibleRect());
 
 		if (curMax == 0 || page == curMax) {
 			for (String realm : getRealms(server)) {
@@ -360,7 +387,7 @@ public class Main {
 		return false;
 	}
 
-	private boolean getUsed(String name, String realm, Document doc) {
+	private boolean isUsed(String name, String realm, Document doc) {
 		Element el = doc.select("#content > div > div.content-bot.clear > div > div.search-right > div.view-table > div > table > tbody").first();
 		String[] c = el.text().split(name);
 
