@@ -350,7 +350,7 @@ public class Main {
 		}
 	}
 
-	static boolean contains(String a, List<String> b) {
+	private boolean contains(String a, List<String> b) {
 		for (String string : b) {
 			if (string.equals(a)) {
 				return true;

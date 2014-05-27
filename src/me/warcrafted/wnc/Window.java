@@ -3,8 +3,10 @@ package me.warcrafted.wnc;
 import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -18,7 +20,7 @@ import javax.swing.JTextField;
 public class Window {
 
 	private JFrame frame;
-	
+
 	private JTextField textField;
 	private TextArea textArea;
 	private JButton btnSave;
@@ -61,6 +63,38 @@ public class Window {
 		btnLoad.setBounds(98, 3, 89, 23);
 		frame.getContentPane().add(btnLoad);
 
+		btnLoad.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String name = textField.getText();
+
+				if (!name.isEmpty()) {
+					File file = new File("./wncData", name + ".txt");
+
+					if (file.exists()) {
+						String[] lines = null;
+						
+						try {
+							lines = openFile();
+						} catch (IOException ex) {
+							ex.printStackTrace();
+						}
+
+						if(lines != null) {
+							textArea.setText(null);
+							
+							for(String line : lines) {
+								textArea.append(line + "\n");
+							}
+						}
+						
+					} else {
+						JOptionPane.showMessageDialog(frame, "File doesn't exist!", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			}
+		});
+
 		btnSave = new JButton("Save");
 		btnSave.setToolTipText("Save these realms to a text file");
 		btnSave.setBounds(350, 3, 89, 23);
@@ -69,13 +103,13 @@ public class Window {
 		btnSave.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				File folder = new File(".", "data");
+				File folder = new File(".", "wncData");
 
 				if (!folder.exists()) {
 					folder.mkdir();
 				}
 
-				File file = new File("./data", name + ".txt");
+				File file = new File("./wncData", name + ".txt");
 
 				if (!file.exists()) {
 					try {
@@ -84,7 +118,7 @@ public class Window {
 						ex.printStackTrace();
 						return;
 					}
-					
+
 				} else {
 					JOptionPane.showMessageDialog(frame, "File already exists!", "Error", JOptionPane.ERROR_MESSAGE);
 					return;
@@ -111,10 +145,41 @@ public class Window {
 			}
 		});
 	}
-	
+
 	public void setContents(List<String> text) {
-		for(String s : text) {
-			textArea.append(s + "\n");
+		for (String s : text) {
+			textArea.append(s.replaceAll(":", " ") + "\n");
 		}
+	}
+
+	private String[] openFile() throws IOException {
+		String path = "./wncData/" + name + ".txt";
+
+		FileReader fileReader = new FileReader(path);
+		BufferedReader textReader = new BufferedReader(fileReader);
+
+		int lines = readLines(path);
+		String[] textData = new String[lines];
+
+		for (int i = 0; i < lines; i++) {
+			textData[i] = textReader.readLine();
+		}
+
+		textReader.close();
+		return textData;
+	}
+
+	private int readLines(String path) throws IOException {
+		FileReader fileReader = new FileReader(path);
+		BufferedReader lineReader = new BufferedReader(fileReader);
+
+		int lineNumber = 0;
+
+		while ((lineReader.readLine()) != null) {
+			lineNumber++;
+		}
+
+		lineReader.close();
+		return lineNumber;
 	}
 }
