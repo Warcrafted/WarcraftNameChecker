@@ -29,6 +29,9 @@ public class Main {
 
 	private JTextField textFieldName;
 	private JTextField textFieldRealm;
+	
+	private JButton buttonName;
+	private JButton buttonRealms;
 
 	private JLabel labelScannerName;
 	private JLabel labelScannerRealms;
@@ -83,6 +86,9 @@ public class Main {
 			e.printStackTrace();
 		}
 
+		getRealms("eu");
+		getRealms("us");
+		
 		used = new ArrayList<String>();
 		available = new ArrayList<String>();
 
@@ -122,17 +128,16 @@ public class Main {
 		labelScannerRealms.setVisible(false);
 		frame.getContentPane().add(labelScannerRealms);
 
-		JButton buttonName = new JButton("Check Name");
+		buttonName = new JButton("Check Name");
 		buttonName.setToolTipText("See if the name is available on given realm");
 		buttonName.setBounds(165, 20, 100, 23);
 		frame.getContentPane().add(buttonName);
 
-		getRealms("eu");
-		getRealms("us");
-
 		buttonName.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				enableButtons(false);
+				
 				String server = comboBox.getSelectedItem().toString();
 				String realm = textFieldRealm.getText();
 				String name = textFieldName.getText();
@@ -145,10 +150,12 @@ public class Main {
 				labelScannerName.setVisible(false);
 
 				JOptionPane.showMessageDialog(frame, "The name \"" + name + "\" is " + (available ? "" : "not") + " available!", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+				
+				enableButtons(true);
 			}
 		});
 
-		JButton buttonRealms = new JButton("Check Realms");
+		buttonRealms = new JButton("Check Realms");
 		buttonRealms.setToolTipText("See all the available realms for this name");
 		buttonRealms.setBounds(165, 45, 100, 23);
 		frame.getContentPane().add(buttonRealms);
@@ -156,10 +163,12 @@ public class Main {
 		buttonRealms.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				enableButtons(false);
+				
 				String region = comboBox.getSelectedItem().toString();
 				String name = textFieldName.getText();
 
-				JOptionPane.showMessageDialog(frame, "Scanning for available realms", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(frame, "Scanning for available realms...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 
 				labelScannerRealms.setVisible(true);
 				labelScannerRealms.setText(s + "0%");
@@ -177,6 +186,8 @@ public class Main {
 				} else {
 					JOptionPane.showMessageDialog(frame, "There are no available realms for this name.", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 				}
+				
+				enableButtons(true);
 			}
 		});
 	}
@@ -400,6 +411,11 @@ public class Main {
 		}
 
 		return a.contains(realm);
+	}
+	
+	private void enableButtons(boolean b) {
+		buttonName.setEnabled(b);
+		buttonRealms.setEnabled(b);
 	}
 
 	private int toInteger(String s) {
