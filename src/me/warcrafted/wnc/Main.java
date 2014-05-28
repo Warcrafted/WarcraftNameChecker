@@ -29,7 +29,7 @@ public class Main {
 
 	private JTextField textFieldName;
 	private JTextField textFieldRealm;
-	
+
 	private JLabel labelScannerName;
 	private JLabel labelScannerRealms;
 
@@ -116,7 +116,7 @@ public class Main {
 		labelScannerName.setBounds(268, 24, 89, 14);
 		labelScannerName.setVisible(false);
 		frame.getContentPane().add(labelScannerName);
-		
+
 		labelScannerRealms = new JLabel("Scanner: 0%");
 		labelScannerRealms.setBounds(268, 49, 89, 14);
 		labelScannerRealms.setVisible(false);
@@ -160,16 +160,16 @@ public class Main {
 				String name = textFieldName.getText();
 
 				JOptionPane.showMessageDialog(frame, "Scanning for available realms", "Scanner", JOptionPane.INFORMATION_MESSAGE);
-				
+
 				labelScannerRealms.setVisible(true);
 				labelScannerRealms.setText(s + "0%");
 				labelScannerRealms.paintImmediately(labelScannerRealms.getVisibleRect());
-				
+
 				List<String> realms = getRealmsAvailable(region, name, 1);
-				
+
 				labelScannerRealms.setText(s + "100%");
-				labelScannerRealms.setVisible(false);			
-				
+				labelScannerRealms.setVisible(false);
+
 				if (!realms.isEmpty()) {
 					Window window = new Window(name + "-" + region.toLowerCase());
 					window.setContents(realms);
@@ -262,7 +262,7 @@ public class Main {
 		return (curMax == 0 || page == curMax) ? true : isAvailable(server, realm, name, page + 1, all);
 	}
 
-	private List<String> getRealms(String server) {	
+	private List<String> getRealms(String server) {
 		if (euRealms == null) {
 			euRealms = new ArrayList<String>();
 		} else {
@@ -338,7 +338,7 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		for (String realm : getRealms(server)) {
 			String realmName = realm.split(":")[0].trim();
 
@@ -358,7 +358,7 @@ public class Main {
 				}
 			}
 		}
-		
+
 		int percent = (int) ((page * 100) / curMax);
 
 		labelScannerRealms.setText(s + (percent + "%"));

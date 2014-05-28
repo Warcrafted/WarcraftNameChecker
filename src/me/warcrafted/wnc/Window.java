@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -82,10 +83,7 @@ public class Window {
 
 						if(lines != null) {
 							textArea.setText(null);
-							
-							for(String line : lines) {
-								textArea.append(line + "\n");
-							}
+							setContents(Arrays.asList(lines));
 						}
 						
 					} else {
