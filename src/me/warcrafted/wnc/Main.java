@@ -29,7 +29,7 @@ public class Main {
 
 	private JTextField textFieldName;
 	private JTextField textFieldRealm;
-	
+
 	private JButton buttonName;
 	private JButton buttonRealms;
 
@@ -88,7 +88,7 @@ public class Main {
 
 		getRealms("eu");
 		getRealms("us");
-		
+
 		used = new ArrayList<String>();
 		available = new ArrayList<String>();
 
@@ -137,7 +137,7 @@ public class Main {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				enableButtons(false);
-				
+
 				String server = comboBox.getSelectedItem().toString();
 				String realm = textFieldRealm.getText();
 				String name = textFieldName.getText();
@@ -150,7 +150,7 @@ public class Main {
 				labelScannerName.setVisible(false);
 
 				JOptionPane.showMessageDialog(frame, "The name \"" + name + "\" is " + (available ? "" : "not") + " available!", "Scanner", JOptionPane.INFORMATION_MESSAGE);
-				
+
 				enableButtons(true);
 			}
 		});
@@ -164,7 +164,7 @@ public class Main {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				enableButtons(false);
-				
+
 				String region = comboBox.getSelectedItem().toString();
 				String name = textFieldName.getText();
 
@@ -186,7 +186,7 @@ public class Main {
 				} else {
 					JOptionPane.showMessageDialog(frame, "There are no available realms for this name.", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 				}
-				
+
 				enableButtons(true);
 			}
 		});
@@ -412,7 +412,7 @@ public class Main {
 
 		return a.contains(realm);
 	}
-	
+
 	private void enableButtons(boolean b) {
 		buttonName.setEnabled(b);
 		buttonRealms.setEnabled(b);
