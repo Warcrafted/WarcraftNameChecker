@@ -22,7 +22,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 public class Main {
 
@@ -130,12 +129,9 @@ public class Main {
 				String realm = textFieldRealm.getText();
 				String name = textFieldName.getText();
 
-				int j = allCharacters(server, realm, name);
-				JOptionPane.showMessageDialog(frame, "Scanning through " + j + " characters...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(frame, "Checking name availability...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 
-				boolean available = isAvailable(server, realm, name, 1, j);
-
-				progressBar.setValue(0);
+				boolean available = isAvailable(server, realm, name, 1);
 
 				JOptionPane.showMessageDialog(frame, "The name \"" + name + "\" is " + (available ? "" : "not") + " available!", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 
@@ -180,35 +176,7 @@ public class Main {
 		});
 	}
 
-	private int allCharacters(String server, String realm, String name) {
-		if (server.isEmpty() || realm.isEmpty() || name.isEmpty())
-			return 0;
-
-		String u = "http://" + server + ".battle.net/wow/en/search?f=wowcharacter&q=" + name;
-		URL url = null;
-
-		try {
-			url = new URL(u);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-
-		Document doc = null;
-
-		try {
-			doc = Jsoup.parse(url.openStream(), "UTF-8", u);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		Elements elements = new Elements();
-		elements.addAll(doc.select("#menu-search > li.item-active > a > span"));
-
-		int j = Integer.parseInt(elements.first().text().split("\\(")[1].split("\\)")[0]);
-		return j;
-	}
-
-	private boolean isAvailable(String server, String realm, String name, final int page, final int all) {
+	private boolean isAvailable(String server, String realm, String name, final int page) {
 		if (server.isEmpty() || realm.isEmpty() || name.isEmpty())
 			return false;
 
@@ -228,10 +196,6 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		int percent = (int) (((page * 25) * 100) / all);
-		progressBar.setValue(percent);
-		progressBar.repaint();
 
 		for (Element el : doc.select("#content > div > div.content-bot.clear > div > div.search-right > div.view-table > div > table > tbody")) {
 			String[] c = el.text().split(name);
@@ -255,7 +219,7 @@ public class Main {
 			}
 		}
 
-		return (curMax == 0 || page == curMax) ? true : isAvailable(server, realm, name, page + 1, all);
+		return (curMax == 0 || page == curMax) ? true : isAvailable(server, realm, name, page + 1);
 	}
 
 	private List<String> getRealms(String server) {

@@ -74,18 +74,18 @@ public class Window {
 
 					if (file.exists()) {
 						String[] lines = null;
-						
+
 						try {
 							lines = openFile();
 						} catch (IOException ex) {
 							ex.printStackTrace();
 						}
 
-						if(lines != null) {
+						if (lines != null) {
 							textArea.setText(null);
 							setContents(Arrays.asList(lines));
 						}
-						
+
 					} else {
 						JOptionPane.showMessageDialog(frame, "File doesn't exist!", "Error", JOptionPane.ERROR_MESSAGE);
 					}
