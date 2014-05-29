@@ -325,7 +325,7 @@ public class Main {
 		}
 
 		int curMax = 0;
-
+		
 		for (Element el : doc.select("#content > div > div.content-bot.clear > div > div.search-right > div:nth-child(3) > div > ul")) {
 			String[] s = el.text().split(" ");
 
@@ -336,7 +336,7 @@ public class Main {
 			}
 		}
 
-		int percent = (int) ((page * 100) / curMax);
+		int percent = (int) ((page * 100) / (curMax == 0 ? 1 : curMax));
 		progressBar.setValue(percent);
 		progressBar.update(progressBar.getGraphics());
 
