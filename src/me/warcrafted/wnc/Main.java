@@ -14,6 +14,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -27,16 +28,13 @@ public class Main {
 
 	private JFrame frame;
 
+	private JProgressBar progressBar;
+
 	private JTextField textFieldName;
 	private JTextField textFieldRealm;
 
 	private JButton buttonName;
 	private JButton buttonRealms;
-
-	private JLabel labelScannerName;
-	private JLabel labelScannerRealms;
-
-	private String s = "Scanner: ";
 
 	private List<String> euRealms;
 	private List<String> usRealms;
@@ -72,7 +70,7 @@ public class Main {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 360, 110);
+		frame.setBounds(100, 100, 280, 130);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setTitle("Warcraft Name Checker");
 		frame.getContentPane().setLayout(null);
@@ -118,16 +116,6 @@ public class Main {
 		lblName.setBounds(10, 56, 36, 14);
 		frame.getContentPane().add(lblName);
 
-		labelScannerName = new JLabel("Scanner: 0%");
-		labelScannerName.setBounds(268, 24, 89, 14);
-		labelScannerName.setVisible(false);
-		frame.getContentPane().add(labelScannerName);
-
-		labelScannerRealms = new JLabel("Scanner: 0%");
-		labelScannerRealms.setBounds(268, 49, 89, 14);
-		labelScannerRealms.setVisible(false);
-		frame.getContentPane().add(labelScannerRealms);
-
 		buttonName = new JButton("Check Name");
 		buttonName.setToolTipText("See if the name is available on given realm");
 		buttonName.setBounds(165, 20, 100, 23);
@@ -146,8 +134,8 @@ public class Main {
 				JOptionPane.showMessageDialog(frame, "Scanning through " + j + " characters...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 
 				boolean available = isAvailable(server, realm, name, 1, j);
-				labelScannerName.setText(s + "100%");
-				labelScannerName.setVisible(false);
+
+				progressBar.setValue(0);
 
 				JOptionPane.showMessageDialog(frame, "The name \"" + name + "\" is " + (available ? "" : "not") + " available!", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 
@@ -160,6 +148,11 @@ public class Main {
 		buttonRealms.setBounds(165, 45, 100, 23);
 		frame.getContentPane().add(buttonRealms);
 
+		progressBar = new JProgressBar();
+		progressBar.setBounds(10, 85, 255, 15);
+		progressBar.setBorderPainted(false);
+		frame.getContentPane().add(progressBar);
+
 		buttonRealms.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -170,14 +163,9 @@ public class Main {
 
 				JOptionPane.showMessageDialog(frame, "Scanning for available realms...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 
-				labelScannerRealms.setVisible(true);
-				labelScannerRealms.setText(s + "0%");
-				labelScannerRealms.paintImmediately(labelScannerRealms.getVisibleRect());
-
 				List<String> realms = getRealmsAvailable(region, name, 1);
 
-				labelScannerRealms.setText(s + "100%");
-				labelScannerRealms.setVisible(false);
+				progressBar.setValue(0);
 
 				if (!realms.isEmpty()) {
 					Window window = new Window(name + "-" + region.toLowerCase());
@@ -242,11 +230,8 @@ public class Main {
 		}
 
 		int percent = (int) (((page * 25) * 100) / all);
-
-		if (!labelScannerName.isVisible())
-			labelScannerName.setVisible(true);
-		labelScannerName.setText(s + (percent + "%"));
-		labelScannerName.paintImmediately(labelScannerName.getVisibleRect());
+		progressBar.setValue(percent);
+		progressBar.repaint();
 
 		for (Element el : doc.select("#content > div > div.content-bot.clear > div > div.search-right > div.view-table > div > table > tbody")) {
 			String[] c = el.text().split(name);
@@ -277,7 +262,7 @@ public class Main {
 		if (euRealms == null) {
 			euRealms = new ArrayList<String>();
 		} else {
-			if (server.equals("eu") && !euRealms.isEmpty() && !usRealms.isEmpty()) {
+			if (server.equalsIgnoreCase("eu") && !euRealms.isEmpty() && !usRealms.isEmpty()) {
 				return euRealms;
 			}
 		}
@@ -285,8 +270,7 @@ public class Main {
 		if (usRealms == null) {
 			usRealms = new ArrayList<String>();
 		} else {
-			if (server.equals("us") && !usRealms.isEmpty() && !euRealms.isEmpty()) {
-				System.out.println("return usRealms");
+			if (server.equalsIgnoreCase("us") && !usRealms.isEmpty() && !euRealms.isEmpty()) {
 				return usRealms;
 			}
 		}
@@ -371,9 +355,8 @@ public class Main {
 		}
 
 		int percent = (int) ((page * 100) / curMax);
-
-		labelScannerRealms.setText(s + (percent + "%"));
-		labelScannerRealms.paintImmediately(labelScannerRealms.getVisibleRect());
+		progressBar.setValue(percent);
+		progressBar.update(progressBar.getGraphics());
 
 		if (curMax == 0 || page == curMax) {
 			for (String realm : getRealms(server)) {
