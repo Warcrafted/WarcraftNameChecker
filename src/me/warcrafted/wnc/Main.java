@@ -90,7 +90,7 @@ public class Main {
 		available = new ArrayList<String>();
 
 		textFieldName = new JTextField();
-		textFieldName.setBounds(55, 56, 100, 20);
+		textFieldName.setBounds(55, 33, 100, 20);
 		frame.getContentPane().add(textFieldName);
 		textFieldName.setColumns(10);
 
@@ -99,7 +99,7 @@ public class Main {
 		frame.getContentPane().add(comboBox);
 
 		textFieldRealm = new JTextField();
-		textFieldRealm.setBounds(55, 33, 100, 20);
+		textFieldRealm.setBounds(55, 56, 100, 20);
 		frame.getContentPane().add(textFieldRealm);
 		textFieldRealm.setColumns(10);
 
@@ -108,11 +108,11 @@ public class Main {
 		frame.getContentPane().add(labelRegion);
 
 		JLabel labelRealm = new JLabel("Realm:");
-		labelRealm.setBounds(10, 33, 36, 14);
+		labelRealm.setBounds(10, 56, 36, 14);
 		frame.getContentPane().add(labelRealm);
 
 		JLabel lblName = new JLabel("Name:");
-		lblName.setBounds(10, 56, 36, 14);
+		lblName.setBounds(10, 33, 36, 14);
 		frame.getContentPane().add(lblName);
 
 		buttonName = new JButton("Check Name");
@@ -123,19 +123,33 @@ public class Main {
 		buttonName.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				enableButtons(false);
-
-				String server = comboBox.getSelectedItem().toString();
+				String region = comboBox.getSelectedItem().toString();
 				String realm = textFieldRealm.getText();
 				String name = textFieldName.getText();
 
-				JOptionPane.showMessageDialog(frame, "Checking name availability...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+				if (!name.isEmpty()) {
+					if (!realm.isEmpty()) {
+						if (validRealm(realm, region)) {
+							enableButtons(false);
 
-				boolean available = isAvailable(server, realm, name, 1);
+							JOptionPane.showMessageDialog(frame, "Checking name availability...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 
-				JOptionPane.showMessageDialog(frame, "The name \"" + name + "\" is " + (available ? "" : "not") + " available!", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+							boolean available = isAvailable(region, realm, name, 1);
 
-				enableButtons(true);
+							JOptionPane.showMessageDialog(frame, "The name \"" + name + "\" is " + (available ? "" : "not") + " available!", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+
+							enableButtons(true);
+						} else {
+							JOptionPane.showMessageDialog(frame, "Invalid realm!", "Error", JOptionPane.ERROR_MESSAGE);
+						}
+
+					} else {
+						JOptionPane.showMessageDialog(frame, "Realm can't be empty!", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+
+				} else {
+					JOptionPane.showMessageDialog(frame, "Name can't be empty!", "Error", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 		});
 
@@ -152,26 +166,30 @@ public class Main {
 		buttonRealms.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				enableButtons(false);
-
 				String region = comboBox.getSelectedItem().toString();
 				String name = textFieldName.getText();
 
-				JOptionPane.showMessageDialog(frame, "Scanning for available realms...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+				if (!name.isEmpty()) {
+					enableButtons(false);
 
-				List<String> realms = getRealmsAvailable(region, name, 1);
+					JOptionPane.showMessageDialog(frame, "Scanning for available realms...", "Scanner", JOptionPane.INFORMATION_MESSAGE);
 
-				progressBar.setValue(0);
+					List<String> realms = getRealmsAvailable(region, name, 1);
 
-				if (!realms.isEmpty()) {
-					Window window = new Window(name + "-" + region.toLowerCase());
-					window.setContents(realms);
+					progressBar.setValue(0);
 
+					if (!realms.isEmpty()) {
+						Window window = new Window(name + "-" + region.toLowerCase());
+						window.setContents(realms);
+
+					} else {
+						JOptionPane.showMessageDialog(frame, "There are no available realms for this name.", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+					}
+
+					enableButtons(true);
 				} else {
-					JOptionPane.showMessageDialog(frame, "There are no available realms for this name.", "Scanner", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(frame, "Name can't be empty!", "Error", JOptionPane.ERROR_MESSAGE);
 				}
-
-				enableButtons(true);
 			}
 		});
 	}
@@ -363,6 +381,18 @@ public class Main {
 	private void enableButtons(boolean b) {
 		buttonName.setEnabled(b);
 		buttonRealms.setEnabled(b);
+	}
+
+	private boolean validRealm(String in, String region) {
+		for (String realm : getRealms(region)) {
+			String realmName = realm.split(":")[0].trim();
+
+			if (in.equals(realmName)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private int toInteger(String s) {
